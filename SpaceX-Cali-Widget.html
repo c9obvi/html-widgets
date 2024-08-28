@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceX California Launch Widget</title>
+
+    <style>
+        /* Define custom font with multiple formats from Supabase Storage */
+        @font-face {
+            font-family: 'MyCustomFont';
+            src: url('https://your-supabase-project.supabase.co/storage/v1/object/public/fonts/MyCustomFont.woff2') format('woff2'),
+                 url('https://your-supabase-project.supabase.co/storage/v1/object/public/fonts/MyCustomFont.woff') format('woff'),
+                 url('https://your-supabase-project.supabase.co/storage/v1/object/public/fonts/MyCustomFont.ttf') format('truetype'),
+                 url('https://your-supabase-project.supabase.co/storage/v1/object/public/fonts/MyCustomFont.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* Make the body fully transparent */
+        body {
+            font-family: 'MyCustomFont', sans-serif; /* Use the custom font */
+            background-color: transparent; /* Transparent background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .glass-widget {
+            background: rgba(255, 255, 255, 0.1); /* Semi-transparent glass effect */
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 300px;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .launch-info {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        .no-launch {
+            font-size: 16px;
+            color: #ff4c4c;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-widget">
+        <div class="title">SpaceX Cali 🚀</div>
+        <div id="launch-info" class="launch-info">Loading...</div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            const API_URL = "https://fdo.rocketlaunch.live/json/launches/next/5";
+
+            async function fetchNextCaliforniaLaunch() {
+                try {
+                    let response = await fetch(API_URL);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    let data = await response.json();
+                    let results = data.result;
+
+                    for (let launch of results) {
+                        if (launch.provider.name === "SpaceX" && launch.pad.location.state === "CA") {
+                            let launchDate = new Date(launch.t0).toLocaleString("en-US", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                            });
+                            return {
+                                name: launch.name,
+                                date: launchDate,
+                            };
+                        }
+                    }
+                    return null;
+                } catch (error) {
+                    console.error("Error fetching launch data:", error);
+                    return null;
+                }
+            }
+
+            async function updateWidget() {
+                let launchInfo = await fetchNextCaliforniaLaunch();
+                let launchInfoDiv = document.getElementById("launch-info");
+
+                if (launchInfo) {
+                    launchInfoDiv.innerHTML = `<strong>${launchInfo.name}</strong><br>${launchInfo.date}`;
+                    if (new Date(launchInfo.date).toDateString() === new Date().toDateString()) {
+                        launchInfoDiv.style.color = "#ff4c4c";
+                    } else {
+                        launchInfoDiv.style.color = "#00ff00";
+                    }
+                } else {
+                    launchInfoDiv.innerHTML = "No CA SpaceX Launch Found";
+                    launchInfoDiv.classList.add("no-launch");
+                }
+            }
+
+            updateWidget();
+        });
+    </script>
+</body>
+</html>
